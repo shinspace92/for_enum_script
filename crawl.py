@@ -164,6 +164,8 @@ def user_behavior(min_time=WIN32_EPOCH, max_time=datetime.utcnow(), user_sid="")
     #         if value[0] == "LangID": continue
     #         print(*value[:-1], sep="\t" * 3)
 
+    print("\n" + "-" * 75)
+    print("Background Activity Monitor\n" + "-" * 75)
     with suppress(WindowsError, OSError), OpenKey(ConnectRegistry(None, HKEY_LOCAL_MACHINE), r"SYSTEM\CurrentControlSet\Services\bam\State\UserSettings\S-1-5-21-881430183-2975666877-16831743-1001", 0, KEY_READ) as key:
         num_vals = QueryInfoKey(key)[1]
         for i in range(num_vals):
