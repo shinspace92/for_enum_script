@@ -1,4 +1,5 @@
 from itertools import count
+from io import BytesIO
 from codecs import encode
 from struct import unpack
 from datetime import datetime, timedelta
@@ -20,15 +21,14 @@ from winreg import (
   REG_BINARY
 )
 
-def rot13(str_val:str):
-    """
-        Goal:
-        This is a simple function that helps us decode the rot_13 string values
-        inside the UserAssist registry key.
-    """
-    return encode(str_val, 'rot_13');
+# consts for unpacking shimcache binary
+WIN10_STATS_SIZE = 0x30
+WIN10_CREATORS_STATS_SIZE = 0x34
+WIN10_MAGIC = b'10ts'
 
+# const for converting FILETIME to UTC
 WIN32_EPOCH = datetime(1601, 1, 1)
+
 def time_(timestamp):
     """
         Goal:
@@ -40,7 +40,17 @@ def time_(timestamp):
         *** settings, and be mindful of the time parameters you feed into the  ***
         *** program!                                                           ***
     """
-    return WIN32_EPOCH + timedelta(microseconds=timestamp // 10)
+    return WIN32_EPOCH + timedelta(microseconds = timestamp // 10)
+
+def rot13(str_val:str):
+    """
+        Goal:
+
+        This is a simple function that helps us decode the rot_13 string values
+        inside the UserAssist registry key.
+    """
+    return encode(str_val, 'rot_13');
+
 
 def get_subkeys(hkey, path, flags = 0):
     """
@@ -109,6 +119,44 @@ def network_info():
                 if values[0] in NAME_VALS:
                     print(*values[:-1], sep="\t" * 3)
 
+def parse_shimcache(appCompatCache, ver_magic=WIN10_MAGIC, creators=False):
+    """
+        Goal: This function reads and unpacks binary data found on the shimcache
+        and parses out relevant info. 
+        
+        *** A lot of code written here is derived from mandiant's shimcacheparser.py ***
+    """
+    entries = []
+
+    if creators:
+        appCompatCache_ = appCompatCache[WIN10_CREATORS_STATS_SIZE:]
+    else:
+        appCompatCache_ = appCompatCache[WIN10_STATS_SIZE:]
+
+    data = BytesIO(appCompatCache_)
+
+    while data.tell() < len(appCompatCache_):
+        header = data.read(12)
+        magic, crc32_hash, entry_len = unpack('<4sLL', header)
+
+        entry_data = BytesIO(data.read(entry_len))
+
+        path_length = unpack('<H', entry_data.read(2))[0]
+        if path_length != 0:
+            path = entry_data.read(path_length).decode('utf-16le', 'replace')
+        else:
+            path = 'Path not found...'
+
+        low_dt, high_dt = unpack('<LL', entry_data.read(8))
+        temp_dt = high_dt
+        temp_dt <<= 32
+        temp_dt |= low_dt
+        last_modified = temp_dt
+
+        print(path, time_(last_modified), sep="\t" * 3)
+
+
+
 def user_behavior(min_time=WIN32_EPOCH, max_time=datetime.utcnow(), user_sid=""):
     """
         Goal:
@@ -120,6 +168,7 @@ def user_behavior(min_time=WIN32_EPOCH, max_time=datetime.utcnow(), user_sid="")
         This is a to-do item for the future, as the subkeys seem to be different for earlier
         versions of windows.
     """
+
     # print("\nUser Assist Values\n" + "-" * 75)
     # print("{CEBFF5CD-ACE2-4F4F-9178-9926F41749EA}\n" + "-" * 75)
     # with suppress(WindowsError, OSError), OpenKey(ConnectRegistry(None, HKEY_CURRENT_USER), r"SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\UserAssist\{CEBFF5CD-ACE2-4F4F-9178-9926F41749EA}\Count", 0, KEY_ALL_ACCESS) as key:
@@ -164,9 +213,24 @@ def user_behavior(min_time=WIN32_EPOCH, max_time=datetime.utcnow(), user_sid="")
     #         if value[0] == "LangID": continue
     #         print(*value[:-1], sep="\t" * 3)
 
-    print("\n" + "-" * 75)
-    print("Background Activity Monitor\n" + "-" * 75)
-    with suppress(WindowsError, OSError), OpenKey(ConnectRegistry(None, HKEY_LOCAL_MACHINE), r"SYSTEM\CurrentControlSet\Services\bam\State\UserSettings\S-1-5-21-881430183-2975666877-16831743-1001", 0, KEY_READ) as key:
+    # print("\n" + "-" * 75)
+    # print("Background Activity Monitor\n" + "-" * 75)
+    # with suppress(WindowsError, OSError), OpenKey(ConnectRegistry(None, HKEY_LOCAL_MACHINE), r"SYSTEM\CurrentControlSet\Services\bam\State\UserSettings\S-1-5-21-881430183-2975666877-16831743-1001", 0, KEY_READ) as key:
+    #     num_vals = QueryInfoKey(key)[1]
+    #     for i in range(num_vals):
+    #         value = EnumValue(key, i)
+    #         # time_(unpack("Q", value[1][60:68])[0])
+    #         # As value[1] is the binary data stored with each value inside the UserAssist subkey,
+    #         # we unpack bytes 60 - 68, which are timestamps for last execution and feed it through
+    #         # our time_ function, which converts it to UTC time. Be mindful that the timestamps 
+    #         # pulled from registry are UTC timestamps.
+    #         if type(value[1]) == int: continue
+    #         print(value[0], time_(unpack("Q", value[1][0:8])[0]), sep="\t" * 3)
+
+
+    # *** USE Eric Zimmerman Tools manually for this shit ***
+    # *** AMCACHE, SHIMCACHE                              ***
+    with suppress(WindowsError, OSError), OpenKey(ConnectRegistry(None, HKEY_LOCAL_MACHINE), r"SYSTEM\CurrentControlSet\Control\Session Manager\AppCompatCache", 0, KEY_READ) as key:
         num_vals = QueryInfoKey(key)[1]
         for i in range(num_vals):
             value = EnumValue(key, i)
@@ -175,8 +239,15 @@ def user_behavior(min_time=WIN32_EPOCH, max_time=datetime.utcnow(), user_sid="")
             # we unpack bytes 60 - 68, which are timestamps for last execution and feed it through
             # our time_ function, which converts it to UTC time. Be mindful that the timestamps 
             # pulled from registry are UTC timestamps.
-            if type(value[1]) == int: continue
-            print(value[0], time_(unpack("Q", value[1][0:8])[0]), sep="\t" * 3)
+            if value[0] == "AppCompatCache":
+                # print(unpack("Q", value[1])
+                # print(value[1]) # How to unpack this long A$$ binary wtf?!
+                if len(value[1]) > WIN10_STATS_SIZE and value[1][WIN10_STATS_SIZE:WIN10_STATS_SIZE+4] == WIN10_MAGIC:
+                    parse_shimcache(value[1])
+                elif len(value[1]) > WIN10_CREATORS_STATS_SIZE and value[1][WIN10_CREATORS_STATS_SIZE:WIN10_CREATORS_STATS_SIZE+4] == WIN10_MAGIC:
+                    parse_shimcache(value[1], creators=True)
+
+                
 
     # *** Just use SAMPARSER.py (dependents: python-registry || pip install python-registry) ***
     # *** to carve out info from the SAM... can't figure out how to do it using the built-in ***
@@ -188,6 +259,9 @@ def user_behavior(min_time=WIN32_EPOCH, max_time=datetime.utcnow(), user_sid="")
     #         for i in range(num_vals):
     #             value = EnumValue(key, i)
     #             print(*value[:-1], sep="\t" * 3)
+
+    
+
 
 def enum_key(hive, subkey:str):
     with suppress(WindowsError, OSError), OpenKey(hive, subkey, 0, KEY_ALL_ACCESS) as key:
