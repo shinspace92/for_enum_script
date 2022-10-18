@@ -1,5 +1,3 @@
-import asyncio
-import re
 import os
 from itertools import count
 from io import BytesIO
