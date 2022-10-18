@@ -1,3 +1,5 @@
+import asyncio
+import re
 import os
 from itertools import count
 from io import BytesIO
@@ -305,7 +307,21 @@ def enum_key(hive, subkey:str):
             print(*values[:-1], sep="\t")
 
 def persistence_info():
-    pass
+    # Run / RunOnce Keys
+    # grab path directories from the registry
+    # get os timestamps - Creation time?
+    # if timestamp is between the user's timestamps, parse out the info
+    print("HKCU Run Keys:\t\t\tLast Modified:\t\t\tLast Accessed:\t\t\tFile Created:")
+    with suppress(WindowsError, OSError), OpenKey(ConnectRegistry(None, HKEY_CURRENT_USER), r"SOFTWARE\Microsoft\Windows\CurrentVersion\Run", 0, KEY_READ) as key:
+        num_vals = QueryInfoKey(key)[1]
+        if num_vals:
+            for i in range(num_vals):
+                value = EnumValue(key, i)
+                split_ = value[1].find("exe")
+                path = (value[1][:split_+3]).replace('"','')
+                print(value[0], datetime.utcfromtimestamp(os.stat(path)[8]), datetime.utcfromtimestamp(os.stat(path)[7]), datetime.utcfromtimestamp(os.stat(path)[9]), sep='\t' * 3)
+                # print(value[0], os.stat(path), sep='\t' * 3)
+
 
 if __name__ == "__main__":
     # # Connecting to the HKEY_LOCAL_MACHINE hive
