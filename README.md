@@ -1,25 +1,37 @@
 This will be a python script that will perform basic enumeration on a windows machine to aid forensics.
 
-To dos:
+To Dos:
 1. Go through common registries and parse out the details into a nice format.
-    a. Computer HW details
-    b. Users
-        i. Any newly created users?
-        ii. Existing users?
-        iii. Admin users?
-        iv. Suspicious users?
-    c. Programs
-        i. UserAssist
-        ii. RecentDocs
-        iii. ShellBags
-    d. Executions
-        i. BAM
-        ii. Shimcache
-        iii. prefetch
-    e. Persistence
-        i. currentversion run/runonce keys
-        ii. startup folders
-        iii. services
+    
+Computer HW details - &check;
+    
+Users - Accessing SAM is quite tricky...
+
+        Any newly created users?
+        Existing users?
+        Admin users?
+        Suspicious users?
+
+Programs & Execution (UserActivity) - Functionality &check;
+
+    1. Code must be implemeneted further such that the function accepts user inputs for search time parameters, as well as a specific User SID.
+
+    2. Instead of redirecting outputs of all the functions to one file, find a better organization of output of csv or tsv files grouped by different functions.
+
+        UserAssist
+        RecentDocs
+        ShellBags - Tricky!
+        App Compat Cache
+        muicache
+        bam
+        prefetch
+
+Persistence 
+
+        currentversion run/runonce keys
+        startup folders
+        services
+
 2. Go through Windows Event Logs and parse out the details
     a. Common Event Ids for:
         i. Windows defender
