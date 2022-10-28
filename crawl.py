@@ -309,69 +309,82 @@ def persistence_info():
     # grab path directories from the registry
     # get os timestamps - Creation time?
     # if timestamp is between the user's timestamps, parse out the info
-    with suppress(WindowsError, OSError), OpenKey(ConnectRegistry(None, HKEY_CURRENT_USER), r"SOFTWARE\Microsoft\Windows\CurrentVersion\Run", 0, KEY_READ) as key:
-        num_vals = QueryInfoKey(key)[1]
-        if num_vals: 
-            print("HKCU Run Keys:\t\tLast Modified:\t\tLast Accessed:\t\tFile Created:")
-            for i in range(num_vals):
-                value = EnumValue(key, i)
-                split_ = value[1].find("exe")
-                path = (value[1][:split_+3]).replace('"','')
-                if r'%windir%' in path:
-                    abs_root_dir = os.path.abspath(os.sep)
-                    path = path.replace(r'%windir%', '')
-                    path = abs_root_dir + 'windows\\' + path
-                    print(value[0], datetime.utcfromtimestamp(os.stat(path)[8]), datetime.utcfromtimestamp(os.stat(path)[7]), datetime.utcfromtimestamp(os.stat(path)[9]), sep='\t')
-                    continue
-                print(value[0], datetime.utcfromtimestamp(os.stat(path)[8]), datetime.utcfromtimestamp(os.stat(path)[7]), datetime.utcfromtimestamp(os.stat(path)[9]), sep='\t')
+    # with suppress(WindowsError, OSError), OpenKey(ConnectRegistry(None, HKEY_CURRENT_USER), r"SOFTWARE\Microsoft\Windows\CurrentVersion\Run", 0, KEY_READ) as key:
+    #     num_vals = QueryInfoKey(key)[1]
+    #     if num_vals: 
+    #         print("HKCU Run Keys:\t\tLast Modified:\t\tLast Accessed:\t\tFile Created:")
+    #         for i in range(num_vals):
+    #             value = EnumValue(key, i)
+    #             split_ = value[1].find("exe")
+    #             path = (value[1][:split_+3]).replace('"','')
+    #             if r'%windir%' in path:
+    #                 abs_root_dir = os.path.abspath(os.sep)
+    #                 path = path.replace(r'%windir%', '')
+    #                 path = abs_root_dir + 'windows\\' + path
+    #                 print(value[0], datetime.utcfromtimestamp(os.stat(path)[8]), datetime.utcfromtimestamp(os.stat(path)[7]), datetime.utcfromtimestamp(os.stat(path)[9]), sep='\t')
+    #                 continue
+    #             print(value[0], datetime.utcfromtimestamp(os.stat(path)[8]), datetime.utcfromtimestamp(os.stat(path)[7]), datetime.utcfromtimestamp(os.stat(path)[9]), sep='\t')
 
-    with suppress(WindowsError, OSError), OpenKey(ConnectRegistry(None, HKEY_CURRENT_USER), r"SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce", 0, KEY_READ) as key:
-        num_vals = QueryInfoKey(key)[1]
-        if num_vals: 
-            print("\nHKCU RunOnce Keys:\t\tLast Modified:\t\tLast Accessed:\t\tFile Created:")
-            for i in range(num_vals):
-                value = EnumValue(key, i)
-                split_ = value[1].find("exe")
-                path = (value[1][:split_+3]).replace('"','')
-                if r'%windir%' in path:
-                    abs_root_dir = os.path.abspath(os.sep)
-                    path = path.replace(r'%windir%', '')
-                    path = abs_root_dir + 'windows\\' + path
-                    print(value[0], datetime.utcfromtimestamp(os.stat(path)[8]), datetime.utcfromtimestamp(os.stat(path)[7]), datetime.utcfromtimestamp(os.stat(path)[9]), sep='\t')
-                    continue
-                print(value[0], datetime.utcfromtimestamp(os.stat(path)[8]), datetime.utcfromtimestamp(os.stat(path)[7]), datetime.utcfromtimestamp(os.stat(path)[9]), sep='\t')
+    # with suppress(WindowsError, OSError), OpenKey(ConnectRegistry(None, HKEY_CURRENT_USER), r"SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce", 0, KEY_READ) as key:
+    #     num_vals = QueryInfoKey(key)[1]
+    #     if num_vals: 
+    #         print("\nHKCU RunOnce Keys:\t\tLast Modified:\t\tLast Accessed:\t\tFile Created:")
+    #         for i in range(num_vals):
+    #             value = EnumValue(key, i)
+    #             split_ = value[1].find("exe")
+    #             path = (value[1][:split_+3]).replace('"','')
+    #             if r'%windir%' in path:
+    #                 abs_root_dir = os.path.abspath(os.sep)
+    #                 path = path.replace(r'%windir%', '')
+    #                 path = abs_root_dir + 'windows\\' + path
+    #                 print(value[0], datetime.utcfromtimestamp(os.stat(path)[8]), datetime.utcfromtimestamp(os.stat(path)[7]), datetime.utcfromtimestamp(os.stat(path)[9]), sep='\t')
+    #                 continue
+    #             print(value[0], datetime.utcfromtimestamp(os.stat(path)[8]), datetime.utcfromtimestamp(os.stat(path)[7]), datetime.utcfromtimestamp(os.stat(path)[9]), sep='\t')
 
-    with suppress(WindowsError, OSError), OpenKey(ConnectRegistry(None, HKEY_LOCAL_MACHINE), r"SOFTWARE\Microsoft\Windows\CurrentVersion\Run", 0, KEY_READ) as key:
-        num_vals = QueryInfoKey(key)[1]
-        if num_vals: 
-            print("\nHKLM Run Keys:\t\tLast Modified:\t\tLast Accessed:\t\tFile Created:")
-            for i in range(num_vals):
-                value = EnumValue(key, i)
-                split_ = value[1].find("exe")
-                path = (value[1][:split_+3]).replace('"','')
-                if r'%windir%' in path:
-                    abs_root_dir = os.path.abspath(os.sep)
-                    path = path.replace(r'%windir%', '')
-                    path = abs_root_dir + 'windows\\' + path
-                    print(value[0], datetime.utcfromtimestamp(os.stat(path)[8]), datetime.utcfromtimestamp(os.stat(path)[7]), datetime.utcfromtimestamp(os.stat(path)[9]), sep='\t')
-                    continue
-                print(value[0], datetime.utcfromtimestamp(os.stat(path)[8]), datetime.utcfromtimestamp(os.stat(path)[7]), datetime.utcfromtimestamp(os.stat(path)[9]), sep='\t')
+    # with suppress(WindowsError, OSError), OpenKey(ConnectRegistry(None, HKEY_LOCAL_MACHINE), r"SOFTWARE\Microsoft\Windows\CurrentVersion\Run", 0, KEY_READ) as key:
+    #     num_vals = QueryInfoKey(key)[1]
+    #     if num_vals: 
+    #         print("\nHKLM Run Keys:\t\tLast Modified:\t\tLast Accessed:\t\tFile Created:")
+    #         for i in range(num_vals):
+    #             value = EnumValue(key, i)
+    #             split_ = value[1].find("exe")
+    #             path = (value[1][:split_+3]).replace('"','')
+    #             if r'%windir%' in path:
+    #                 abs_root_dir = os.path.abspath(os.sep)
+    #                 path = path.replace(r'%windir%', '')
+    #                 path = abs_root_dir + 'windows\\' + path
+    #                 print(value[0], datetime.utcfromtimestamp(os.stat(path)[8]), datetime.utcfromtimestamp(os.stat(path)[7]), datetime.utcfromtimestamp(os.stat(path)[9]), sep='\t')
+    #                 continue
+    #             print(value[0], datetime.utcfromtimestamp(os.stat(path)[8]), datetime.utcfromtimestamp(os.stat(path)[7]), datetime.utcfromtimestamp(os.stat(path)[9]), sep='\t')
 
-    with suppress(WindowsError, OSError), OpenKey(ConnectRegistry(None, HKEY_LOCAL_MACHINE), r"SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce", 0, KEY_READ) as key:
-        num_vals = QueryInfoKey(key)[1]
-        if num_vals: 
-            print("\nHKLM RunOnce Keys:\t\tLast Modified:\t\tLast Accessed:\t\tFile Created:")
-            for i in range(num_vals):
-                value = EnumValue(key, i)
-                split_ = value[1].find("exe")
-                path = (value[1][:split_+3]).replace('"','')
-                if r'%windir%' in path:
-                    abs_root_dir = os.path.abspath(os.sep)
-                    path = path.replace(r'%windir%', '')
-                    path = abs_root_dir + 'windows\\' + path
-                    print(value[0], datetime.utcfromtimestamp(os.stat(path)[8]), datetime.utcfromtimestamp(os.stat(path)[7]), datetime.utcfromtimestamp(os.stat(path)[9]), sep='\t')
-                    continue
-                print(value[0], datetime.utcfromtimestamp(os.stat(path)[8]), datetime.utcfromtimestamp(os.stat(path)[7]), datetime.utcfromtimestamp(os.stat(path)[9]), sep='\t')
+    # with suppress(WindowsError, OSError), OpenKey(ConnectRegistry(None, HKEY_LOCAL_MACHINE), r"SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce", 0, KEY_READ) as key:
+    #     num_vals = QueryInfoKey(key)[1]
+    #     if num_vals: 
+    #         print("\nHKLM RunOnce Keys:\t\tLast Modified:\t\tLast Accessed:\t\tFile Created:")
+    #         for i in range(num_vals):
+    #             value = EnumValue(key, i)
+    #             split_ = value[1].find("exe")
+    #             path = (value[1][:split_+3]).replace('"','')
+    #             if r'%windir%' in path:
+    #                 abs_root_dir = os.path.abspath(os.sep)
+    #                 path = path.replace(r'%windir%', '')
+    #                 path = abs_root_dir + 'windows\\' + path
+    #                 print(value[0], datetime.utcfromtimestamp(os.stat(path)[8]), datetime.utcfromtimestamp(os.stat(path)[7]), datetime.utcfromtimestamp(os.stat(path)[9]), sep='\t')
+    #                 continue
+    #             print(value[0], datetime.utcfromtimestamp(os.stat(path)[8]), datetime.utcfromtimestamp(os.stat(path)[7]), datetime.utcfromtimestamp(os.stat(path)[9]), sep='\t')
+
+    startup_dir = "C:\ProgramData\Microsoft\Windows\Start Menu\Programs\StartUp"
+    print("\nContents in Startup Folder:\t\tLast Modified:\t\tLast Accessed:\t\tFile Created:")
+    for startup in os.listdir(startup_dir):
+        print(startup, datetime.utcfromtimestamp(os.stat(startup_dir + "\\" + startup)[8]), datetime.utcfromtimestamp(os.stat(startup_dir + "\\" + startup)[7]), datetime.utcfromtimestamp(os.stat(startup_dir + "\\" + startup)[9]), sep="\t\t\t")
+
+    # TODO: also do the same for C:\Users\[Username]\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup
+    # directory when the functions are re-purposed to accept user sid.
+
+    # TODO: use os.walk() to recursively go through scheduled tasks folder and get stats 
+    # Return the tasks created, modified, or accessed within given time frame.
+
+    # TODO: Figure out how to parse out relevant info from the services registry keys?
 
 if __name__ == "__main__":
     # # Connecting to the HKEY_LOCAL_MACHINE hive
