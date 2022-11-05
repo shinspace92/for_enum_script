@@ -305,6 +305,33 @@ def enum_key(hive, subkey:str):
             print(*values[:-1], sep="\t")
 
 def persistence_info():
+    """
+        Goal:
+        This function gives us an overview of possible persistence mechanisms by parsing out
+        relevant artifacts from Run keys, Startup Directories and security logs
+
+        Instead of going through massive trees inside the registry services keys, I figure 
+        it would be just as good, if not more precise, to track down services created within
+        the given time frame via security log ids. 
+
+        E Zimmerman tool and other tools may come with a more thorough capabilities when parsing
+        services information.
+
+        This function takes in the arguments min_time, max_time, and user_sid to carve out relevant 
+        data within specific time frames, and pertinent to specific user's hive. 
+        
+        TODO: Default arguments 
+        are set to get all data from #-#-#-#-#-#-1001.
+
+        For startup folders, we target 2 specific directories:
+        C:\Users\[Username]\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup
+        C:\ProgramData\Microsoft\Windows\Start Menu\Programs\StartUp
+
+        *** Do note that there can be far more creative and deceiving run keys and service run keys
+        created in the registry!!! ***
+
+    """
+
     # Run / RunOnce Keys
     # grab path directories from the registry
     # get os timestamps - Creation time?
